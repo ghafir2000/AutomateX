@@ -2,23 +2,39 @@
 
 namespace App\Http\Controllers\API;
 
-use App\Http\Controllers\Controller;
-use App\Http\Requests\LoginRequest;
-use App\Http\Resources\UserResource;
 use App\Models\User;
+use App\Models\Customer;
 use Illuminate\Http\Request;
+use App\Http\Controllers\Controller;
+use App\Http\Resources\UserResource;
 use Illuminate\Support\Facades\Hash;
+use App\Http\Requests\UserLoginRequest;
+use App\Http\Requests\UserRegisterRequest;
 
 class AuthController extends Controller
 {
-    public function login(LoginRequest $request)
+    public function login(UserLoginRequest $request)
     {
         $data = $request->validated();
-        $user = User::where('phone', $data['phone'])->first();
+        $user = User::where('email', $data['email'])->first();
         if (!Hash::check($data['password'], $user->password)) {
             return $this->response(message: 'The provided credentials are incorrect.', code: 401);
         }
-        $user->token = $user->createToken('auth_token')->plainTextToken;
+        $user->token = $user->createToken('barrer_token')->plainTextToken;
+        return $this->response(UserResource::make($user));
+    }
+    public function register(UserRegisterRequest $request)
+    {
+        $user = User::create([
+            'name' => $request->name,
+            'email' => $request->email,
+            'userable_type' => Customer::class,
+            'userable_id' => Customer::factory(),
+            'password' => Hash::make($request->password),
+        ]);
+
+        $user->token = $user->createToken('barrer_token')->plainTextToken;
+
         return $this->response(UserResource::make($user));
     }
 }
