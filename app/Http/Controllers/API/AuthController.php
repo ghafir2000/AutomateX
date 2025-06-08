@@ -4,6 +4,7 @@ namespace App\Http\Controllers\API;
 
 use App\Models\User;
 use App\Models\Customer;
+use Illuminate\Support\Str;
 use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
 use App\Http\Resources\UserResource;
@@ -25,12 +26,15 @@ class AuthController extends Controller
     }
     public function register(UserRegisterRequest $request)
     {
+        $data = $request->validated();
+        // return $data;
         $user = User::create([
-            'name' => $request->name,
-            'email' => $request->email,
+            'name' => $data['name'],
+            'email' => $data['email'],
             'userable_type' => Customer::class,
-            'userable_id' => Customer::factory(),
-            'password' => Hash::make($request->password),
+            'userable_id' => Customer::factory(1)->create()->first()->id,
+            'password' => Hash::make($data['password']),
+            'remember_token' => Str::random(10),
         ]);
 
         $user->token = $user->createToken('barrer_token')->plainTextToken;

@@ -21,6 +21,7 @@ class UserRegisterRequest extends FormRequest
      */
     public function rules(): array
     {
+        // dd($this->all());
         return [
             'name' => 'nullable|string|max:255',
             'email' => 'required|string|email|max:255|unique:users',
