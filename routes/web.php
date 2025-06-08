@@ -1,10 +1,5 @@
 <?php
 
-use App\Http\Controllers\CategoryController;
-use App\Http\Controllers\Dashboard\AuthController;
-use App\Http\Controllers\Dashboard\LanguageController;
-use App\Http\Controllers\Dashboard\ProductController;
-use App\Http\Controllers\TestController;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Route;
 
