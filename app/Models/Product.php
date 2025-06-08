@@ -2,23 +2,19 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 
-class Admin extends Model
+class Product extends Model
 {
     use HasFactory;
     use SoftDeletes;
-
-    protected $table = 'admins';
-
-
     protected $guarded = ['id', 'created_at', 'updated_at'];
 
 
-    public function userable()
+    public function garment()
     {
-        return $this->morphOne(User::class, 'userable');
+        return $this->belongsTo(Garment::class);
     }
 }

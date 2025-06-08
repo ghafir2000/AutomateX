@@ -54,8 +54,8 @@ class User extends Authenticatable implements MustVerifyEmail
         'email_verified_at' => 'datetime',
     ];
 
-    public function account()
+    public function userable()
     {
-        return $this->morphTo('type');
+        return $this->morphTo('userable');
     }
 }

@@ -1,8 +1,10 @@
 <?php
 
-use Illuminate\Database\Migrations\Migration;
-use Illuminate\Database\Schema\Blueprint;
+use App\Models\Part;
+use App\Models\Table;
 use Illuminate\Support\Facades\Schema;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Database\Migrations\Migration;
 
 return new class extends Migration
 {
@@ -13,7 +15,10 @@ return new class extends Migration
     {
         Schema::create('part_table', function (Blueprint $table) {
             $table->id();
+            $table->softDeletes();
             $table->timestamps();
+            $table->foreignIdFor(Part::class)->constrained()->cascadeOnDelete()->cascadeOnUpdate();
+            $table->foreignIdFor(Table::class)->constrained()->cascadeOnDelete()->cascadeOnUpdate();
         });
     }
 

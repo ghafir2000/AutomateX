@@ -6,16 +6,21 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 
-class Part extends Model
+class Garment extends Model
 {
     use HasFactory;
     use SoftDeletes;
-
     protected $guarded = ['id', 'created_at', 'updated_at'];
 
-    public function table()
+
+    public function tables()
     {
-        return $this->belongsToMany(Table::class, 'part_table', 'part_id', 'table_id');
+        return $this->hasMany(Table::class);
+    }
+
+    public function products()
+    {
+        return $this->hasMany(Product::class);
     }
 
 
