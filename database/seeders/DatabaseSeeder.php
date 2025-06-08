@@ -4,8 +4,10 @@ namespace Database\Seeders;
 
 // use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 
-use App\Models\Category;
+use App\Models\Part;
 use App\Models\User;
+use App\Models\Table;
+use App\Models\Category;
 use Illuminate\Database\Seeder;
 
 class DatabaseSeeder extends Seeder
@@ -15,16 +17,14 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
-        User::factory()->times(10)->create();
         $this->call([
             UserSeeder::class,
-            BrandSeeder::class
+            GormentSeeder::class
         ]);
-        // \App\Models\User::factory(10)->create();
-
-        // \App\Models\User::factory()->create([
-        //     'name' => 'Test User',
-        //     'email' => 'test@example.com',
-        // ]);
+        foreach (Part::all() as $part) {
+            $part->tables()->sync(
+                Table::all()->random(rand(1, 7))->pluck('id')->toArray()
+            );
+        }
     }
 }

@@ -3,9 +3,11 @@
 namespace Database\Factories;
 
 use App\Models\User;
-use Illuminate\Database\Eloquent\Factories\Factory;
-use Illuminate\Support\Facades\Hash;
+use App\Models\Admin;
+use App\Models\Customer;
 use Illuminate\Support\Str;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
  * @extends \Illuminate\Database\Eloquent\Factories\Factory<\App\Models\User>
@@ -22,23 +24,27 @@ class UserFactory extends Factory
         return [
             'name' => fake()->name(),
             'email' => fake()->unique()->safeEmail(),
-            'email_verified_at' => now(),
-            'password' => Hash::make('password'), // password
+            'password' => Hash::make('password'), // the password is "password"
             'remember_token' => Str::random(10),
-            'phone' => fake()->phoneNumber(),
-            'type' => 'admin'
         ];
     }
 
-    /**
-     * Indicate that the model's email address should be unverified.
-     *
-     * @return $this
-     */
-    public function unverified(): static
+    public function asAdmin()
     {
-        return $this->state(fn (array $attributes) => [
-            'email_verified_at' => null,
-        ]);
+        return $this->state(function (array $attributes) {
+            return [
+                'userable_type' => Admin::class,
+                'userable_id' => Admin::factory(),
+            ];
+        });
+    }
+    public function asCustomer()
+    {
+        return $this->state(function (array $attributes) {
+            return [
+                'userable_type' => Customer::class,
+                'userable_id' => Customer::factory(),
+            ];
+        });
     }
 }

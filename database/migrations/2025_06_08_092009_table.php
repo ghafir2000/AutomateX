@@ -19,6 +19,7 @@ return new class extends Migration
             $table->string('name');
             $table->string('description');
             $table->integer('floor_id');
+            $table->integer('capacity');
             $table->foreignIdFor(Garment::class)->constrained()->cascadeOnDelete()->cascadeOnUpdate();
         });
     }

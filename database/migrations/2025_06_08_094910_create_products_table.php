@@ -16,6 +16,7 @@ return new class extends Migration
             $table->id();
             $table->softDeletes();
             $table->timestamps();
+            $table->float('price');
             $table->foreignIdFor(Garment::class)->constrained()->cascadeOnDelete()->cascadeOnUpdate();
 
         });

@@ -9,10 +9,6 @@ class Notification extends Model
 {
     use HasFactory;
 
-    public function customers()
-    {
-        return $this->belongsToMany(Customer::class, 'customer_notification');
-    }
 
     public function model()
     {
