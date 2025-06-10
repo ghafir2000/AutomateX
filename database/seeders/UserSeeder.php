@@ -14,8 +14,8 @@ class UserSeeder extends Seeder
     public function run(): void
     {
         User::factory($state = [
-            'name' => 'ahmad al ghafir',
-            'email' => 'ahmadghafeer@gmail.com', //password is "password"
+            'name' => 'noman',
+            'email' => 'noman@gmail.com', //password is "password"
         ])->asAdmin()->create();
         User::factory(10)->asCustomer()->create();
     }
