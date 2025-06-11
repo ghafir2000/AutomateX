@@ -14,9 +14,19 @@ class BarcodeController extends Controller
      */
     public function index()
     {
+        if (!auth()->check()) {
+            // You might want to handle this differently, e.g., throw an exception
+            // or return an unauthenticated response, depending on your API's security.
+            return $this->response(message: 'Unauthenticated.', status: 401);
+        }
+        
         $barcodes = Barcode::all();
+        
+        event(new BarcodeIndexEvent($barcodes, auth()->id()));
+
         return $this->response(data: $barcodes);
     }
+
 
 
 

@@ -13,9 +13,11 @@ import 'pusher_table_view.dart';
 // Initialize controllers globally (as per your original structure)
 final CheckAccount controllercheck = Get.put(CheckAccount());
 final CheckBoxController contrllercheckbox = Get.put(CheckBoxController());
-final CreateAccountController controllercreateaccount = Get.put(CreateAccountController());
+final CreateAccountController controllercreateaccount =
+    Get.put(CreateAccountController());
 // Retrieve PusherController using Get.find() as it's Get.put() in main.dart
-final PusherController pusherController = Get.find<PusherController>(tag: 'pusher');
+final PusherController pusherController =
+    Get.find<PusherController>(tag: 'pusher');
 
 class SmartIncubater extends StatefulWidget {
   const SmartIncubater({super.key});
@@ -31,9 +33,9 @@ class _SmartIncubaterState extends State<SmartIncubater> {
   // Define titles for your pages based on tab index
   final List<String> _pageTitles = const [
     "Real-time Table", // For index 0 (PusherTableView)
-    "Favorite",       // For index 1
-    "Notifications",  // For index 2
-    "Profile",        // For index 3
+    "Favorite", // For index 1
+    "Notifications", // For index 2
+    "Profile", // For index 3
   ];
 
   @override
@@ -66,7 +68,8 @@ class _SmartIncubaterState extends State<SmartIncubater> {
             ),
           ),
           centerTitle: true,
-          title: Column( // Use Column if you had multiple lines, otherwise just Text
+          title: Column(
+            // Use Column if you had multiple lines, otherwise just Text
             children: [
               // Display dynamic title based on the selected tab
               Text(_pageTitles[_selectedIndex]),
@@ -96,7 +99,9 @@ class _SmartIncubaterState extends State<SmartIncubater> {
                           height: 47,
                           decoration: const BoxDecoration(
                             shape: BoxShape.circle,
-                            image: DecorationImage(image: AssetImage("images/ff.png"), fit: BoxFit.cover),
+                            image: DecorationImage(
+                                image: AssetImage("images/ff.png"),
+                                fit: BoxFit.cover),
                           ),
                         ),
                       ),
@@ -106,25 +111,30 @@ class _SmartIncubaterState extends State<SmartIncubater> {
                       width: 200,
                       child: Column(
                         mainAxisAlignment: MainAxisAlignment.start,
-                        crossAxisAlignment: CrossAxisAlignment.start, // Align text to start
+                        crossAxisAlignment:
+                            CrossAxisAlignment.start, // Align text to start
                         children: [
                           Obx(() => Text(
-                            controllercreateaccount.user.value.isNotEmpty
-                                ? controllercreateaccount.user.value
-                                : "Guest User", // Default if no username
-                            style: const TextStyle(color: Colors.white, fontSize: 16),
-                          )),
+                                controllercreateaccount.user.value.isNotEmpty
+                                    ? controllercreateaccount.user.value
+                                    : "Guest User", // Default if no username
+                                style: const TextStyle(
+                                    color: Colors.white, fontSize: 16),
+                              )),
                           const SizedBox(height: 5),
                           Obx(() => Text(
-                            controllercreateaccount.phoneNumber.value.isNotEmpty
-                                ? controllercreateaccount.phoneNumber.value
-                                : "No phone number", // Reactive phone number
-                            style: const TextStyle(color: Colors.white70, fontSize: 14),
-                          )),
+                                controllercreateaccount
+                                        .phoneNumber.value.isNotEmpty
+                                    ? controllercreateaccount.phoneNumber.value
+                                    : "No phone number", // Reactive phone number
+                                style: const TextStyle(
+                                    color: Colors.white70, fontSize: 14),
+                              )),
                           const SizedBox(height: 5),
                           const Text(
                             "Project Type: Default", // Static, consider making reactive if needed
-                            style: TextStyle(color: Colors.white70, fontSize: 14),
+                            style:
+                                TextStyle(color: Colors.white70, fontSize: 14),
                           ),
                         ],
                       ),
@@ -166,7 +176,8 @@ class _SmartIncubaterState extends State<SmartIncubater> {
                 ),
                 onTap: () {},
                 splashColor: Colors.green,
-                subtitle: const Text(" لمحة عن الفريق ", textDirection: TextDirection.rtl),
+                subtitle: const Text(" لمحة عن الفريق ",
+                    textDirection: TextDirection.rtl),
               ),
             ],
           ),
@@ -220,7 +231,8 @@ class _SmartIncubaterState extends State<SmartIncubater> {
                 domeHeight: 20,
                 domeCircleColor: Colors.white30,
                 barHeight: 40,
-                borderRaduis: const BorderRadius.vertical(top: Radius.circular(10)),
+                borderRaduis:
+                    const BorderRadius.vertical(top: Radius.circular(10)),
                 curve: Curves.easeOutSine,
                 borderColor: Colors.black,
                 selectedIndex: _selectedIndex,
@@ -231,11 +243,23 @@ class _SmartIncubaterState extends State<SmartIncubater> {
                   });
                 },
                 barColor: Colors.blueAccent,
-                tabs:  [
-                  MoltenTab(unselectedColor: Colors.grey, selectedColor: Colors.blue, icon: Icon(Icons.home)),
-                  MoltenTab(unselectedColor: Colors.grey, selectedColor: Colors.red, icon: Icon(Icons.favorite)),
-                  MoltenTab(unselectedColor: Colors.grey, selectedColor: Colors.yellow, icon: Icon(Icons.notifications)),
-                  MoltenTab(unselectedColor: Colors.grey, selectedColor: Colors.green, icon: Icon(Icons.person)),
+                tabs: [
+                  MoltenTab(
+                      unselectedColor: Colors.grey,
+                      selectedColor: Colors.blue,
+                      icon: Icon(Icons.home)),
+                  MoltenTab(
+                      unselectedColor: Colors.grey,
+                      selectedColor: Colors.red,
+                      icon: Icon(Icons.favorite)),
+                  MoltenTab(
+                      unselectedColor: Colors.grey,
+                      selectedColor: Colors.yellow,
+                      icon: Icon(Icons.notifications)),
+                  MoltenTab(
+                      unselectedColor: Colors.grey,
+                      selectedColor: Colors.green,
+                      icon: Icon(Icons.person)),
                 ],
               ),
             ),

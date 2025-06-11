@@ -8,11 +8,13 @@ class PusherTableView extends StatelessWidget {
   final String apiKey;
   final String cluster;
 
-  const PusherTableView({Key? key, required this.apiKey, required this.cluster}) : super(key: key);
+  const PusherTableView({Key? key, required this.apiKey, required this.cluster})
+      : super(key: key);
 
   @override
   Widget build(BuildContext context) {
-    final PusherController controller = Get.find<PusherController>(tag: 'pusher');
+    final PusherController controller =
+        Get.find<PusherController>(tag: 'pusher');
 
     return Obx(() {
       if (controller.isLoading.value) {
@@ -25,7 +27,8 @@ class PusherTableView extends StatelessWidget {
 
       // --- ADD THIS CHECK ---
       if (controller.parsedMessages.isEmpty) {
-        return const Center(child: Text("No messages received yet. Waiting for data..."));
+        return const Center(
+            child: Text("No messages received yet. Waiting for data..."));
       }
       // --- END ADDITION ---
 

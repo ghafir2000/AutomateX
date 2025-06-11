@@ -10,7 +10,8 @@ import '../Controller/Check_Acount.dart';
 // Initialize controllers globally (as per your original structure)
 final CheckAccount controllercheck = Get.put(CheckAccount());
 final CheckBoxController contrllercheckbox = Get.put(CheckBoxController());
-final CreateAccountController controllercreateaccount = Get.put(CreateAccountController());
+final CreateAccountController controllercreateaccount =
+    Get.put(CreateAccountController());
 
 int id = 0; // Keeping as global as per your original code
 
@@ -34,7 +35,8 @@ class Inc_Page extends StatelessWidget {
             },
           ),
           shape: LinearBorder.bottom(
-            alignment: 30, // Note: alignment is for the border position, not visual alignment.
+            alignment:
+                30, // Note: alignment is for the border position, not visual alignment.
             side: const BorderSide(
               width: 1,
               color: Colors.red,
@@ -70,7 +72,9 @@ class Inc_Page extends StatelessWidget {
                           height: 47,
                           decoration: const BoxDecoration(
                             shape: BoxShape.circle,
-                            image: DecorationImage(image: AssetImage("images/ff.png"), fit: BoxFit.cover),
+                            image: DecorationImage(
+                                image: AssetImage("images/ff.png"),
+                                fit: BoxFit.cover),
                           ),
                         ),
                       ),
@@ -80,25 +84,30 @@ class Inc_Page extends StatelessWidget {
                       width: 200,
                       child: Column(
                         mainAxisAlignment: MainAxisAlignment.start,
-                        crossAxisAlignment: CrossAxisAlignment.start, // Align text to start
+                        crossAxisAlignment:
+                            CrossAxisAlignment.start, // Align text to start
                         children: [
                           Obx(() => Text(
-                            controllercreateaccount.user.value.isNotEmpty
-                                ? controllercreateaccount.user.value
-                                : "Guest User", // Default if no username
-                            style: const TextStyle(color: Colors.white, fontSize: 16),
-                          )),
+                                controllercreateaccount.user.value.isNotEmpty
+                                    ? controllercreateaccount.user.value
+                                    : "Guest User", // Default if no username
+                                style: const TextStyle(
+                                    color: Colors.white, fontSize: 16),
+                              )),
                           const SizedBox(height: 5),
                           Obx(() => Text(
-                            controllercreateaccount.phoneNumber.value.isNotEmpty
-                                ? controllercreateaccount.phoneNumber.value
-                                : "No phone number", // Reactive phone number
-                            style: const TextStyle(color: Colors.white70, fontSize: 14),
-                          )),
+                                controllercreateaccount
+                                        .phoneNumber.value.isNotEmpty
+                                    ? controllercreateaccount.phoneNumber.value
+                                    : "No phone number", // Reactive phone number
+                                style: const TextStyle(
+                                    color: Colors.white70, fontSize: 14),
+                              )),
                           const SizedBox(height: 5),
                           const Text(
                             "Project Type: Default", // Static, consider making reactive if needed
-                            style: TextStyle(color: Colors.white70, fontSize: 14),
+                            style:
+                                TextStyle(color: Colors.white70, fontSize: 14),
                           ),
                         ],
                       ),
@@ -140,7 +149,8 @@ class Inc_Page extends StatelessWidget {
                 ),
                 onTap: () {},
                 splashColor: Colors.green,
-                subtitle: const Text(" لمحة عن الفريق ", textDirection: TextDirection.rtl),
+                subtitle: const Text(" لمحة عن الفريق ",
+                    textDirection: TextDirection.rtl),
               ),
             ],
           ),
@@ -152,7 +162,8 @@ class Inc_Page extends StatelessWidget {
               width: Get.width,
               height: Get.height * 0.8,
               child: ListView(
-                padding: const EdgeInsets.only(top: 29, left: 29, right: 29, bottom: 29),
+                padding: const EdgeInsets.only(
+                    top: 29, left: 29, right: 29, bottom: 29),
                 children: [
                   Container(
                     decoration: const BoxDecoration(
@@ -162,9 +173,9 @@ class Inc_Page extends StatelessWidget {
                     child: Column(
                       children: List.generate(
                         contrllercheckbox.checkList.length,
-                            (index) {
+                        (index) {
                           return Obx(
-                                () => Row(
+                            () => Row(
                               children: [
                                 Checkbox(
                                   value: contrllercheckbox.checkList[index],
@@ -179,7 +190,8 @@ class Inc_Page extends StatelessWidget {
                                   height: 40,
                                 ),
                                 const SizedBox(width: 10),
-                                Text("(description of the project ${index + 1})"),
+                                Text(
+                                    "(description of the project ${index + 1})"),
                               ],
                             ),
                           );
@@ -220,7 +232,8 @@ class Inc_Page extends StatelessWidget {
 
   void enter() {
     if (id + 1 == 1) {
-      Get.to(() => const SmartIncubater()); // Navigate to SmartIncubater for project 1
+      Get.to(() =>
+          const SmartIncubater()); // Navigate to SmartIncubater for project 1
     }
     contrllercheckbox.accessPages(id + 1);
   }

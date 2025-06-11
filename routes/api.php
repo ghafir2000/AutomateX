@@ -39,6 +39,7 @@ Route::get('/barcode',[BarcodeController::class , 'index']);
 // });
 
 Route::middleware('auth:sanctum')->group( function () {
+
   
 });
 
