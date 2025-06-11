@@ -2,6 +2,7 @@
 
 namespace App\Events;
 
+use App\Models\Barcode;
 use Illuminate\Broadcasting\Channel;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Broadcasting\PrivateChannel;
@@ -15,15 +16,15 @@ class BarcodeIndexEvent implements ShouldBroadcast
 {
     use Dispatchable, InteractsWithSockets, SerializesModels;
 
-    protected Collection $barcodes;
+    protected Barcode $Barcode;
     protected $userId;
 
     /**
      * Create a new event instance.
      */
-    public function __construct(Collection $barcodes, int $userId)
+    public function __construct(Barcode $Barcode, int $userId)
     {
-        $this->barcodes = $barcodes;
+        $this->Barcode = $Barcode;
         $this->userId = $userId;
     }
 
@@ -50,13 +51,7 @@ class BarcodeIndexEvent implements ShouldBroadcast
     {
         // Ensure the data structure matches what Flutter expects for parsing
         return [
-            'barcodes' => $this->barcodes->map(function($barcode) {
-                return [
-                    'id' => $barcode->id,
-                    'barcode' => $barcode->barcode, // Use 'barcode' field from your migration
-                    // You can add other relevant barcode fields here
-                ];
-            })->toArray(),
+            'barcode' => $this->Barcode
         ];
     }
 }

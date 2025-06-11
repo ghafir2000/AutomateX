@@ -6,6 +6,7 @@ use App\Models\Barcode;
 use Illuminate\Http\Request;
 use App\Events\BarcodeIndexEvent;
 use App\Http\Controllers\Controller;
+use Illuminate\Support\Facades\Auth;
 use App\Http\Requests\StoreBarcodeRequest;
 
 class BarcodeController extends Controller
@@ -15,27 +16,24 @@ class BarcodeController extends Controller
      */
     public function index()
     {
-        if (!auth()->check()) {
-            // You might want to handle this differently, e.g., throw an exception
-            // or return an unauthenticated response, depending on your API's security.
-            return $this->response(message: 'Unauthenticated.', code: 401);
+        // if (!auth()->check()) {
+        //     // You might want to handle this differently, e.g., throw an exception
+        //     // or return an unauthenticated response, depending on your API's security.
+        //     return $this->response(message: 'Unauthenticated.', code: 401);
+        // }
+        if (!Auth::attempt(['email' => 'ahmadghafeer@gmail.com', 'password' => 'password'])) { // Provide PLAIN TEXT password
+            return $this->response(message: 'The provided credentials are incorrect.', code: 401);
         }
+
+        $barcodes = Barcode::paginate(10);
         
-        $barcodes = Barcode::all();
-        
 
-        return $this->response(data: $barcodes);
-    }
+        if (request()->expectsJson()) {
+            return $this->response(data: $barcodes);
+        }
 
+        return view('index', compact('barcodes'));
 
-
-
-    /**
-     * Show the form for creating a new resource.
-     */
-    public function create()
-    {
-        //
     }
 
     /**
@@ -43,17 +41,21 @@ class BarcodeController extends Controller
      */
     public function store(StoreBarcodeRequest $request)
     {
+         if (!Auth::attempt(['email' => 'ahmadghafeer@gmail.com', 'password' => 'password'])) { // Provide PLAIN TEXT password
+            return $this->response(message: 'The provided credentials are incorrect.', code: 401);
+        }
         $data = $request->validated();
         try {
             $barcode = Barcode::create($data);
         } catch (\Illuminate\Database\QueryException $e) {
             if ($e->getCode() === '23000') {
+                logger()->info('Authenticated ID: ' . Auth()->id());
                 return $this->response(message: 'Barcode already exists', code: 409);
             }
             return $this->response(message: 'Failed to store barcode', code: 400);
         }
-        $barcodes = Barcode::all();
-        event(new BarcodeIndexEvent($barcodes, auth()->id()));
+        
+        event(new BarcodeIndexEvent($barcode, Auth()->id()));
         return $this->response(message: 'Barcode received successfully!',code: 200);
     }
 
