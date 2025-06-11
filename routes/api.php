@@ -16,6 +16,8 @@ use App\Http\Controllers\API\AuthController;
 Route::post('/register', [AuthController::class, 'register']);
 Route::post('/login',[AuthController::class , 'login']);
 
+//http://127.0.0.1:8000/api/login
+
 Route::middleware('auth:sanctum')->group( function () {
   
 });

@@ -1,3 +1,4 @@
+// Controller/pusher_controller.dart
 import 'package:get/get.dart';
 import 'package:pusher_client_fixed/pusher_client_fixed.dart';
 import 'dart:convert';
@@ -31,15 +32,17 @@ class PusherController extends GetxController {
 
       pusher.connect();
 
-      channel = pusher.subscribe('mqtt-channel');
+      // --- CRITICAL CHANGE: Use 'my-channel' and 'my-event' as per Pusher dashboard ---
+      channel = pusher.subscribe('my-channel'); // Changed from 'mqtt-channel'
 
-      channel.bind('mqtt.message.received', (PusherEvent? event) {
+      channel.bind('my-event', (PusherEvent? event) {
+        // Changed from 'mqtt.message.received'
         if (event != null && event.data != null) {
           try {
             final Map<String, dynamic> data = jsonDecode(event.data!);
 
-            // --- CRITICAL CHANGE FOR NULL SAFETY & TYPE CHECKING ---
-            // Safely access 'message' and check its type before decoding.
+            // Safely access 'message' field. Assuming 'my-event' will now have a 'message' field.
+            // If the structure of 'my-event' is different, you'll need to adjust this parsing.
             final dynamic innerJsonStringDynamic = data['message'];
 
             if (innerJsonStringDynamic is String) {
@@ -47,14 +50,14 @@ class PusherController extends GetxController {
 
               parsedMessage['receivedAt'] = DateTime.now(); // Add timestamp
               parsedMessages.add(parsedMessage); // Add to RxList
-              errorMessage.value = ''; // Clear error if message received
+              errorMessage.value =
+                  ''; // Clear error if message received successfully
             } else {
-              // Handle case where 'message' field is missing or not a String
-              print("Pusher message 'message' field is missing or not a valid JSON string: $innerJsonStringDynamic");
-              errorMessage.value = "Invalid Pusher message format: 'message' field missing or not a JSON string.";
+              print(
+                  "Pusher event 'my-event' data['message'] is missing or not a valid JSON string: $innerJsonStringDynamic");
+              errorMessage.value =
+                  "Invalid Pusher event format: 'message' field missing or not a JSON string.";
             }
-            // --- END OF CRITICAL CHANGE ---
-
           } catch (e) {
             print("Error parsing event data from Pusher: $e");
             errorMessage.value = "Error parsing Pusher data: $e";
@@ -78,7 +81,7 @@ class PusherController extends GetxController {
 
   @override
   void onClose() {
-    pusher.unsubscribe('mqtt-channel');
+    pusher.unsubscribe('my-channel'); // Changed from 'mqtt-channel'
     pusher.disconnect();
     super.onClose();
   }

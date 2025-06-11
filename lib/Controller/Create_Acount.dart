@@ -39,7 +39,8 @@ class CreateAccountController extends GetxController {
   }
 
   // Getter to check overall validity
-  bool get isValid => minLength.value && hasNumber.value && passwordsMatch.value;
+  bool get isValid =>
+      minLength.value && hasNumber.value && passwordsMatch.value;
 
   // Saves credentials to in-memory variables (user, pass)
   bool saveCredentials() {
