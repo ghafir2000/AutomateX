@@ -3,12 +3,13 @@
 namespace App\Events;
 
 use Illuminate\Broadcasting\Channel;
-use Illuminate\Broadcasting\InteractsWithSockets;
-use Illuminate\Broadcasting\PresenceChannel;
-use Illuminate\Broadcasting\PrivateChannel;
-use Illuminate\Contracts\Broadcasting\ShouldBroadcast;
-use Illuminate\Foundation\Events\Dispatchable;
 use Illuminate\Queue\SerializesModels;
+use Illuminate\Broadcasting\PrivateChannel;
+use Illuminate\Broadcasting\PresenceChannel;
+use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Foundation\Events\Dispatchable;
+use Illuminate\Broadcasting\InteractsWithSockets;
+use Illuminate\Contracts\Broadcasting\ShouldBroadcast;
 
 class BarcodeIndexEvent implements ShouldBroadcast
 {
@@ -20,7 +21,7 @@ class BarcodeIndexEvent implements ShouldBroadcast
     /**
      * Create a new event instance.
      */
-    public function __construct(Barcode $barcodes, int $userId)
+    public function __construct(Collection $barcodes, int $userId)
     {
         $this->barcodes = $barcodes;
         $this->userId = $userId;

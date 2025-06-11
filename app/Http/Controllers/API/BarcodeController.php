@@ -4,8 +4,9 @@ namespace App\Http\Controllers\API;
 
 use App\Models\Barcode;
 use Illuminate\Http\Request;
-use App\Http\Requests\StoreBarcodeRequest;
+use App\Events\BarcodeIndexEvent;
 use App\Http\Controllers\Controller;
+use App\Http\Requests\StoreBarcodeRequest;
 
 class BarcodeController extends Controller
 {
@@ -17,12 +18,11 @@ class BarcodeController extends Controller
         if (!auth()->check()) {
             // You might want to handle this differently, e.g., throw an exception
             // or return an unauthenticated response, depending on your API's security.
-            return $this->response(message: 'Unauthenticated.', status: 401);
+            return $this->response(message: 'Unauthenticated.', code: 401);
         }
         
         $barcodes = Barcode::all();
         
-        event(new BarcodeIndexEvent($barcodes, auth()->id()));
 
         return $this->response(data: $barcodes);
     }
@@ -52,6 +52,8 @@ class BarcodeController extends Controller
             }
             return $this->response(message: 'Failed to store barcode', code: 400);
         }
+        $barcodes = Barcode::all();
+        event(new BarcodeIndexEvent($barcodes, auth()->id()));
         return $this->response(message: 'Barcode received successfully!',code: 200);
     }
 
