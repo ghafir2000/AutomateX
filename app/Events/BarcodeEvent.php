@@ -12,20 +12,22 @@ use Illuminate\Foundation\Events\Dispatchable;
 use Illuminate\Broadcasting\InteractsWithSockets;
 use Illuminate\Contracts\Broadcasting\ShouldBroadcast;
 
-class BarcodeIndexEvent implements ShouldBroadcast
+class BarcodeEvent implements ShouldBroadcast
 {
     use Dispatchable, InteractsWithSockets, SerializesModels;
 
     protected Barcode $Barcode;
     protected $userId;
+    protected $isUpdate;
 
     /**
      * Create a new event instance.
      */
-    public function __construct(Barcode $Barcode, int $userId)
+    public function __construct(Barcode $Barcode, int $userId, bool $isUpdate = false)
     {
         $this->Barcode = $Barcode;
         $this->userId = $userId;
+        $this->isUpdate = $isUpdate;
     }
 
     /**
@@ -39,7 +41,7 @@ class BarcodeIndexEvent implements ShouldBroadcast
     }
     public function broadcastAs(): string
     {
-        return 'barcodes-event'; // Keep this consistent with Flutter
+        return 'barcode-event'; // Keep this consistent with Flutter
     }
 
     /**
@@ -51,7 +53,8 @@ class BarcodeIndexEvent implements ShouldBroadcast
     {
         // Ensure the data structure matches what Flutter expects for parsing
         return [
-            'barcode' => $this->Barcode
+            'barcode' => $this->Barcode,
+            'isUpdate' => $this->isUpdate
         ];
     }
 }

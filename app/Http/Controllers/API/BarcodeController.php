@@ -4,10 +4,11 @@ namespace App\Http\Controllers\API;
 
 use App\Models\Barcode;
 use Illuminate\Http\Request;
-use App\Events\BarcodeIndexEvent;
+use App\Events\BarcodeEvent;
 use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\Auth;
 use App\Http\Requests\StoreBarcodeRequest;
+use App\Http\Requests\UpdateBarcodeRequest;
 
 class BarcodeController extends Controller
 {
@@ -55,32 +56,35 @@ class BarcodeController extends Controller
             return $this->response(message: 'Failed to store barcode', code: 400);
         }
         
-        event(new BarcodeIndexEvent($barcode, Auth()->id()));
+        event(new BarcodeEvent($barcode, Auth()->id()));
         return $this->response(message: 'Barcode received successfully!',code: 200);
     }
-
-    /**
-     * Display the specified resource.
-     */
-    public function show(Barcode $barcode)
-    {
-        //
-    }
-
-    /**
-     * Show the form for editing the specified resource.
-     */
-    public function edit(Barcode $barcode)
-    {
-        //
-    }
-
+    
     /**
      * Update the specified resource in storage.
      */
-    public function update(Request $request, Barcode $barcode)
+    public function update(UpdateBarcodeRequest $request,string $value)
     {
-        //
+        if (!Auth::attempt(['email' => 'ahmadghafeer@gmail.com', 'password' => 'password'])) { // Provide PLAIN TEXT password
+            return $this->response(message: 'The provided credentials are incorrect.', code: 401);
+        }
+        $data = $request->validated();
+        $barcode = Barcode::where('value', $value)->first();
+        logger()->info('barcode found in update is: ' . $barcode);
+        
+        try {
+            $barcode->update($data);
+        } catch (\Illuminate\Database\QueryException $e) {
+            if ($e->getCode() === '23000') {
+                logger()->info('Authenticated ID: ' . Auth()->id());
+                logger()->info('barcode doesnt exsist on update, attempting store');
+                return $this->store($data);
+            }
+            return $this->response(message: 'Failed to update barcode', code: 400);
+        }
+        $barcode = Barcode::where('value', $value)->first();
+        event(new BarcodeEvent($barcode, Auth()->id(),$isUpdate = true));
+        return $this->response(message: 'Barcode updated successfully!',code: 200);
     }
 
     /**

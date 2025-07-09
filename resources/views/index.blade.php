@@ -4,18 +4,9 @@
 
 @section('title', __('Barcodes List'))
 
-{{-- @push('styles')
-    <style>
-        /* ALL YOUR PREVIOUS STYLES HAVE BEEN MOVED TO app.css/app.scss */
-    </style>
-@endpush --}}
-{{-- The @push('styles') block can be removed if all styles are global now --}}
-
-
 @section('content')
-<div class="container mt-4 barcode-page-container"> {{-- This class is now styled by app.css/app.scss --}}
+<div class="container mt-4 barcode-page-container">
     <div class="text-center mb-4">
-        {{-- I see you changed the logo name, ensure this exists: public/images/AutomateX.png --}}
         <img src="{{ asset('images/AutomateX.png') }}" alt="@lang('Company Logo')"
              style="display: block; margin-left: auto; margin-right: auto; width: 400px; max-height: 200px; object-fit: contain;">
     </div>
@@ -39,6 +30,9 @@
                                 <th class="text-center">@lang('Barcode Image')</th>
                                 <th>@lang('Value / Code')</th>
                                 <th>@lang('Associated Part')</th>
+                                <th>@lang('Associated Table')</th> {{-- New Column Header --}}
+                                <th>@lang('Start Time')</th>
+                                <th>@lang('Current Time')</th>
                                 <th class="text-center">@lang('Actions')</th>
                             </tr>
                         </thead>
@@ -46,26 +40,36 @@
                             @foreach ($barcodes as $index => $item)
                             @php
                                 $currentDisplayImage = $barcodeDisplayImages[($initialImageIndex + $loop->index) % count($barcodeDisplayImages)];
+                                $partNameFromImage = '';
+                                if (str_ends_with($currentDisplayImage, 'A.png')) {
+                                    $partNameFromImage = __('Part A');
+                                } elseif (str_ends_with($currentDisplayImage, 'B.png')) {
+                                    $partNameFromImage = __('Part B');
+                                } elseif (str_ends_with($currentDisplayImage, 'C.png')) {
+                                    $partNameFromImage = __('Part C');
+                                }
                             @endphp
-                            <tr>
+                            {{-- Add data-barcode-id attribute to the row for easier targeting --}}
+                            <tr data-barcode-id="{{ $item->id }}">
                                 <td class="text-center">
                                     <img src="{{ $currentDisplayImage }}"
                                          alt="@lang('Barcode for') {{ $item->barcode ?? 'N/A' }}"
                                          style="max-height: 60px; display: block; margin: auto; background-color: white; padding: 5px;">
                                 </td>
-                                <td>{{ $item->barcode ?? __('N/A') }}</td>
+                                <td>{{ $item->value ?? __('N/A') }}</td>
                                 <td>
-                                @if (str_ends_with($currentDisplayImage, 'A.png'))
-                                    @lang('Part A')
-                                @elseif (str_ends_with($currentDisplayImage, 'B.png'))
-                                    @lang('Part B')
-                                @elseif (str_ends_with($currentDisplayImage, 'C.png'))
-                                    @lang('Part C')
-                                @endif
+                                    {{-- Use actual part name if available, otherwise fallback to image-based name --}}
+                                    {{ $item->part->name ?? $partNameFromImage }}
                                 </td>
+                                <td>
+                                    {{-- Assuming Barcode model has a 'table' relationship --}}
+                                    {{ $item->table->name ?? ($item->table_id ?? __('N/A')) }} {{-- New Column Data --}}
+                                </td>
+                                <td>{{ $item->created_at ? (new DateTime($item->created_at))->format('d/m/Y, g:i:s A') : __('N/A') }}</td>
+                                <td>{{ $item->updated_at ? (new DateTime($item->updated_at))->format('d/m/Y, g:i:s A') : __('N/A') }}</td>
                                 <td class="text-center">
                                     <button type="button" class="btn btn-sm btn-secondary" onclick="printBarcodeImage('{{ $currentDisplayImage }}')" title="@lang('Print Displayed Image')">
-                                        <i class="fas fa-print"></i> {{-- Font Awesome icon --}}
+                                        <i class="fas fa-print"></i>
                                     </button>
                                 </td>
                             </tr>
@@ -75,7 +79,6 @@
                 </div>
                 @if ($barcodes instanceof \Illuminate\Pagination\LengthAwarePaginator)
                     <div class="d-flex justify-content-center mt-3">
-                        {{-- Bootstrap pagination styling will apply automatically --}}
                         {{ $barcodes->links() }}
                     </div>
                 @endif
@@ -91,31 +94,21 @@
 @endsection
 
 @push('scripts')
-{{-- If Bootstrap JS is not part of app.js and needed for this page specifically --}}
-{{-- <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js"></script> --}}
-
-
-@push('scripts')
 <script>
-    // Ensure this script block runs after app.js (which initializes Echo)
-
-    // Helper function for logging with context
     function logEcho(message, data = null) {
         console.log(`[Barcode Page Echo] ${message}`, data || '');
     }
 
-    // Initialize these for the Echo callback, defined outside to be accessible
     let barcodeImagePaths = [];
     let nextDynamicImageIndex = 0;
 
     @php
-        // Prepare these for JS embedding
         $jsBarcodeDisplayImages = [asset('images/A.png'), asset('images/B.png'), asset('images/C.png')];
         $jsInitialImageIndex = 0;
         $jsTotalInitialItems = 0;
         if ($barcodes && $barcodes->count() > 0) {
             $page = $barcodes instanceof \Illuminate\Pagination\LengthAwarePaginator ? $barcodes->currentPage() : 1;
-            $perPage = $barcodes instanceof \Illuminate\Pagination\LengthAwarePaginator ? $barcodes->perPage() : count($jsBarcodeDisplayImages); // or $barcodes->count()
+            $perPage = $barcodes instanceof \Illuminate\Pagination\LengthAwarePaginator ? $barcodes->perPage() : count($jsBarcodeDisplayImages);
             $jsInitialImageIndex = ($page - 1) * $perPage;
             $jsTotalInitialItems = $barcodes->count();
         }
@@ -125,37 +118,87 @@
     nextDynamicImageIndex = ({{ $jsInitialImageIndex }} + {{ $jsTotalInitialItems }}) % barcodeImagePaths.length;
     logEcho('Initial image paths and index set.', { paths: barcodeImagePaths, nextIndex: nextDynamicImageIndex });
 
+    // Helper to format date similar to PHP's 'd/m/Y, g:i:s A'
+    function formatJsDateTime(dateString) {
+        if (!dateString) return 'N/A';
+        try {
+            const date = new Date(dateString);
+            const day = String(date.getDate()).padStart(2, '0');
+            const month = String(date.getMonth() + 1).padStart(2, '0'); // Months are 0-indexed
+            const year = date.getFullYear();
+            
+            let hours = date.getHours();
+            const minutes = String(date.getMinutes()).padStart(2, '0');
+            const seconds = String(date.getSeconds()).padStart(2, '0');
+            const ampm = hours >= 12 ? 'PM' : 'AM';
+            hours = hours % 12;
+            hours = hours ? hours : 12; // the hour '0' should be '12'
+            const strTime = String(hours).padStart(2, '0') + ':' + minutes + ':' + seconds + ' ' + ampm;
+
+            return `${day}/${month}/${year}, ${strTime}`;
+        } catch (e) {
+            return 'Invalid Date';
+        }
+    }
+
 
     @auth
         const currentUserId = {{ auth()->id() }};
         logEcho(`User authenticated with ID: ${currentUserId}. Attempting to listen on private channel.`);
 
-        // Wait for DOM content to be fully loaded, especially if Echo init is also deferred.
-        // More robust: ensure Echo is truly ready. A small delay or custom event can help.
-        // For now, assuming app.js (with Echo init) loads and executes before this pushed script.
         document.addEventListener('DOMContentLoaded', function() {
             if (typeof window.Echo !== 'undefined') {
                 logEcho('Echo object found. Subscribing to private channel.');
                 try {
                     window.Echo.private(`user.${currentUserId}.barcodes`)
-                        .listen('.barcodes-event', (e) => {
+                        .listen('.barcode-event', (e) => {
                             logEcho('BarcodesEvent received:', e);
                             const barcodesTableBody = document.querySelector('#barcodes-table tbody');
                             if (!barcodesTableBody) {
                                 console.error('[Barcode Page Echo] Barcodes table body not found!');
                                 return;
                             }
-                            if (!e.barcode) {
-                                console.error('[Barcode Page Echo] Event received but "e.barcode" is missing or undefined.', e);
+                            if (!e.barcode || !e.barcode.id) { // Ensure barcode and its ID are present
+                                console.error('[Barcode Page Echo] Event received but "e.barcode" or "e.barcode.id" is missing or undefined.', e);
                                 return;
                             }
 
-                            const newRow = document.createElement('tr');
-                            const imageToUse = barcodeImagePaths[nextDynamicImageIndex];
-                            nextDynamicImageIndex = (nextDynamicImageIndex + 1) % barcodeImagePaths.length;
+                            const barcodeValue = e.barcode.barcode || e.barcode.value || 'N/A'; // Use barcode.barcode first as per migration
+                            const imageToUse = barcodeImagePaths[nextDynamicImageIndex]; // Get image before potential return in update
+                            const associatedPartNameFromImage =
+                                imageToUse.endsWith('A.png') ? '@lang('Part A')' :
+                                imageToUse.endsWith('B.png') ? '@lang('Part B')' :
+                                imageToUse.endsWith('C.png') ? '@lang('Part C')' :
+                                __('N/A');
 
-                            const barcodeValue = e.barcode.value || e.barcode.barcode || 'N/A';
-                            const productName = e.barcode.product_name || 'N/A';
+                            if (e.isUpdate === true) {
+                                logEcho('Processing as UPDATE event for barcode ID:', e.barcode.id);
+                                const existingRow = barcodesTableBody.querySelector(`tr[data-barcode-id="${e.barcode.id}"]`);
+                                if (existingRow) {
+                                    logEcho('Found existing row to update:', existingRow);
+                                    // Update columns. Adjust nth-child if column order changes.
+                                    // 1: Image (usually not updated this way, but if needed, handle image src)
+                                    // existingRow.querySelector('td:nth-child(1) img').src = newImageSource;
+                                    existingRow.querySelector('td:nth-child(2)').textContent = barcodeValue;
+                                    existingRow.querySelector('td:nth-child(3)').textContent = e.barcode.part_name || associatedPartNameFromImage; // Prefer actual part name if sent
+                                    existingRow.querySelector('td:nth-child(4)').textContent = e.barcode.table_name || e.barcode.table_id || 'N/A'; // Prefer actual table name if sent
+                                    existingRow.querySelector('td:nth-child(5)').textContent = formatJsDateTime(e.barcode.created_at);
+                                    existingRow.querySelector('td:nth-child(6)').textContent = formatJsDateTime(e.barcode.updated_at);
+                                    // 7: Actions (button - usually not updated dynamically unless its attributes change)
+                                    logEcho('Row updated successfully.');
+                                    return; // Stop further processing for this event
+                                } else {
+                                    logEcho('isUpdate was true, but no existing row found for ID. Will add as new.', e.barcode.id);
+                                    // Fall through to add as new if row not found, or handle as an error
+                                }
+                            }
+
+                            // If not an update, or if update target not found, add as new row
+                            logEcho('Processing as NEW entry or fallback from failed update.');
+                            const newRow = document.createElement('tr');
+                            newRow.setAttribute('data-barcode-id', e.barcode.id); // Set ID for future updates
+
+                            nextDynamicImageIndex = (nextDynamicImageIndex + 1) % barcodeImagePaths.length;
 
                             newRow.innerHTML = `
                                 <td class="text-center">
@@ -164,26 +207,27 @@
                                          style="max-height: 60px; display: block; margin: auto; background-color: white; padding: 5px;">
                                 </td>
                                 <td>${barcodeValue}</td>
-                                <td>${productName}</td>
+                                <td>${e.barcode.part_name || associatedPartNameFromImage}</td> {{-- Prefer actual part name --}}
+                                <td>${e.barcode.table_name || e.barcode.table_id || 'N/A'}</td> {{-- New Table Data Cell --}}
+                                <td>${formatJsDateTime(e.barcode.created_at)}</td>
+                                <td>${formatJsDateTime(e.barcode.updated_at)}</td>
                                 <td class="text-center">
-                                    <button type="button" class="btn btn-sm btn-secondary" onclick="printBarcodeImage('${imageToUse}')" title="Print Displayed Image">
+                                    <button type="button" class="btn btn-sm btn-secondary" onclick="printBarcodeImage('${imageToUse}')" title="@lang('Print Displayed Image')">
                                         <i class="fas fa-print"></i>
                                     </button>
                                 </td>
                             `;
-                            barcodesTableBody.prepend(newRow);
+                            barcodesTableBody.prepend(newRow); // Add to the top
                             logEcho('New barcode row prepended to table.');
                         })
-                        .error((error) => { // Listen for subscription errors
+                        .error((error) => {
                             console.error('[Barcode Page Echo] Error subscribing to private channel:', error);
                         });
 
-                    // You can also listen for general connection state changes on Echo.connector.pusher
                     if (window.Echo.connector && window.Echo.connector.pusher) {
                         const pusherInstance = window.Echo.connector.pusher;
                         pusherInstance.connection.bind('state_change', function(states) {
                             logEcho('Pusher connection state changed:', states);
-                            // states.current will be 'connected', 'connecting', 'unavailable', 'failed', 'disconnected'
                             if (states.current === 'connected') {
                                 logEcho('Pusher connected successfully via Echo connector!');
                             }
@@ -192,7 +236,6 @@
                             console.error('[Barcode Page Echo] Pusher connection error via Echo connector:', err);
                         });
                     }
-
 
                 } catch (error) {
                     console.error('[Barcode Page Echo] Error setting up Echo listener:', error);
@@ -205,8 +248,8 @@
         logEcho('User not authenticated. Real-time barcode updates disabled.');
     @endauth
 
-    // Print function specific to this page
     function printBarcodeImage(imageUrl) {
+        // ... (your existing print function)
         if (!imageUrl) {
             alert("@lang('Barcode image URL is not available.')");
             return;

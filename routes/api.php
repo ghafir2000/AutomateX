@@ -20,6 +20,7 @@ Route::post('/login',[AuthController::class , 'login']);
 
 Route::post('/barcode',[BarcodeController::class , 'store']);
 Route::get('/barcode',[BarcodeController::class , 'index']);
+Route::put('/barcode/{value}',[BarcodeController::class , 'update']); //the barcode value itself 
 
 // Route::post('/barcode', function (Request $request) {
 //     // Access the barcode data sent as form data
