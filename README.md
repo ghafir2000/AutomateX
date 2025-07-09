@@ -1,16 +1,48 @@
-# app
 
-A new Flutter project.
 
-## Getting Started
+# My Project Name Automate
 
-This project is a starting point for a Flutter application.
+This repository contains the source code for the AutomateX project, which is composed of a Laravel API backend and a Flutter cross-platform frontend.
 
-A few resources to get you started if this is your first Flutter project:
+## Directory Structure
 
-- [Lab: Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Cookbook: Useful Flutter samples](https://docs.flutter.dev/cookbook)
+The project is organized into two primary folders:
 
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+- `/backend-laravel`: Contains all the PHP source code for the Laravel backend API.
+- `/frontend-flutter`: Contains all the Dart source code for the Flutter mobile application.
+
+Each directory contains its own `README.md` file with specific instructions for that part of the project.
+
+---
+
+## Quick Start
+
+### Backend (Laravel)
+
+1.  Navigate to the backend directory:
+    ```sh
+    cd backend-laravel
+    ```
+2.  Install dependencies:
+    ```sh
+    composer install
+    ```
+3.  Run the development server:
+    ```sh
+    php artisan serve
+    ```
+
+### Frontend (Flutter)
+
+1.  Navigate to the frontend directory:
+    ```sh
+    cd frontend-flutter
+    ```
+2.  Get dependencies:
+    ```sh
+    flutter pub get
+    ```
+3.  Run the app on a connected device or emulator:
+    ```sh
+    flutter run
+    ```
