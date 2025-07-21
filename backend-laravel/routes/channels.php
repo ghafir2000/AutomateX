@@ -13,6 +13,6 @@ use Illuminate\Support\Facades\Broadcast;
 |
 */
 
-Broadcast::channel('user.{userId}.barcodes', function ($user, $userId) {
+Broadcast::channel('user.{userId}.qrs', function ($user, $userId) {
     return (int) $user->id === (int) $userId;
 });

@@ -2,15 +2,15 @@
 
 namespace App\Http\Controllers\API;
 
-use App\Models\Barcode;
+use App\Models\Qr;
 use Illuminate\Http\Request;
-use App\Events\BarcodeEvent;
+use App\Events\QrEvent;
 use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\Auth;
-use App\Http\Requests\StoreBarcodeRequest;
-use App\Http\Requests\UpdateBarcodeRequest;
+use App\Http\Requests\StoreQrRequest;
+use App\Http\Requests\UpdateQrRequest;
 
-class BarcodeController extends Controller
+class QrController extends Controller
 {
     /**
      * Display a listing of the resource.
@@ -26,71 +26,71 @@ class BarcodeController extends Controller
             return $this->response(message: 'The provided credentials are incorrect.', code: 401);
         }
 
-        $barcodes = Barcode::paginate(10);
+        $Qrs = Qr::paginate(10);
         
 
         if (request()->expectsJson()) {
-            return $this->response(data: $barcodes);
+            return $this->response(data: $Qrs);
         }
 
-        return view('index', compact('barcodes'));
+        return view('index', compact('Qrs'));
 
     }
 
     /**
      * Store a newly created resource in storage.
      */
-    public function store(StoreBarcodeRequest $request)
+    public function store(StoreQrRequest $request)
     {
          if (!Auth::attempt(['email' => 'ahmadghafeer@gmail.com', 'password' => 'password'])) { // Provide PLAIN TEXT password
             return $this->response(message: 'The provided credentials are incorrect.', code: 401);
         }
         $data = $request->validated();
         try {
-            $barcode = Barcode::create($data);
+            $Qr = Qr::create($data);
         } catch (\Illuminate\Database\QueryException $e) {
             if ($e->getCode() === '23000') {
                 logger()->info('Authenticated ID: ' . Auth()->id());
-                return $this->response(message: 'Barcode already exists', code: 409);
+                return $this->response(message: 'Qr already exists', code: 409);
             }
-            return $this->response(message: 'Failed to store barcode', code: 400);
+            return $this->response(message: 'Failed to store Qr', code: 400);
         }
         
-        event(new BarcodeEvent($barcode, Auth()->id()));
-        return $this->response(message: 'Barcode received successfully!',code: 200);
+        event(new QrEvent($Qr, Auth()->id()));
+        return $this->response(message: 'Qr received successfully!',code: 200);
     }
     
     /**
      * Update the specified resource in storage.
      */
-    public function update(UpdateBarcodeRequest $request,string $value)
+    public function update(UpdateQrRequest $request,string $value)
     {
         if (!Auth::attempt(['email' => 'ahmadghafeer@gmail.com', 'password' => 'password'])) { // Provide PLAIN TEXT password
             return $this->response(message: 'The provided credentials are incorrect.', code: 401);
         }
         $data = $request->validated();
-        $barcode = Barcode::where('value', $value)->first();
-        logger()->info('barcode found in update is: ' . $barcode);
+        $Qr = Qr::where('value', $value)->first();
+        logger()->info('Qr found in update is: ' . $Qr);
         
         try {
-            $barcode->update($data);
+            $Qr->update($data);
         } catch (\Illuminate\Database\QueryException $e) {
             if ($e->getCode() === '23000') {
                 logger()->info('Authenticated ID: ' . Auth()->id());
-                logger()->info('barcode doesnt exsist on update, attempting store');
+                logger()->info('Qr doesnt exsist on update, attempting store');
                 return $this->store($data);
             }
-            return $this->response(message: 'Failed to update barcode', code: 400);
+            return $this->response(message: 'Failed to update Qr', code: 400);
         }
-        $barcode = Barcode::where('value', $value)->first();
-        event(new BarcodeEvent($barcode, Auth()->id(),$isUpdate = true));
-        return $this->response(message: 'Barcode updated successfully!',code: 200);
+        $Qr = Qr::where('value', $value)->first();
+        event(new QrEvent($Qr, Auth()->id(),$isUpdate = true));
+        return $this->response(message: 'Qr updated successfully!',code: 200);
     }
 
     /**
      * Remove the specified resource from storage.
      */
-    public function destroy(Barcode $barcode)
+    public function destroy(Qr $Qr)
     {
         //
     }

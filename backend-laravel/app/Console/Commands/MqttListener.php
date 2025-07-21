@@ -2,8 +2,8 @@
 
 namespace App\Console\Commands;
 
-use App\Models\Barcode;
-use App\Events\BarcodeEvent; // Your existing event
+use App\Models\Qr;
+use App\Events\QrEvent; // Your existing event
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Log;
 use PhpMqtt\Client\Facades\MQTT;
@@ -35,35 +35,35 @@ class MqttListener extends Command
             $qrCodeValue = $data['qrData'];
 
             // --- REUSE YOUR EXISTING LOGIC ---
-            // We'll mimic what your BarcodeController does.
+            // We'll mimic what your QrController does.
 
-            // Find if the barcode already exists
-            $barcode = Barcode::where('value', $qrCodeValue)->first();
+            // Find if the Qr already exists
+            $Qr = Qr::where('value', $qrCodeValue)->first();
             
             // For a private channel, we need a user. For this IoT context,
             // we'll hardcode a "system" user or a specific user ID.
             // IMPORTANT: Change '1' to the ID of the user you want to broadcast to.
             $targetUserId = 1; 
 
-            if ($barcode) {
+            if ($Qr) {
                 // IT'S AN UPDATE
-                $this->info("Barcode [{$qrCodeValue}] exists. Processing as UPDATE.");
-                $barcode->touch(); // Just update the updated_at timestamp
+                $this->info("Qr [{$qrCodeValue}] exists. Processing as UPDATE.");
+                $Qr->touch(); // Just update the updated_at timestamp
                 $isUpdate = true;
-                event(new BarcodeEvent($barcode, $targetUserId, $isUpdate));
+                event(new QrEvent($Qr, $targetUserId, $isUpdate));
             } else {
                 // IT'S A NEW ENTRY
-                $this->info("Barcode [{$qrCodeValue}] is new. Processing as CREATE.");
+                $this->info("Qr [{$qrCodeValue}] is new. Processing as CREATE.");
                 try {
-                    $newBarcode = Barcode::create([
+                    $newQr = Qr::create([
                         'value' => $qrCodeValue,
                         // Add any other required fields with default values
                         // 'part_id' => 1, // Example
                     ]);
                     $isUpdate = false;
-                    event(new BarcodeEvent($newBarcode, $targetUserId, $isUpdate));
+                    event(new QrEvent($newQr, $targetUserId, $isUpdate));
                 } catch (\Exception $e) {
-                    Log::error("Failed to create barcode from MQTT: " . $e->getMessage());
+                    Log::error("Failed to create Qr from MQTT: " . $e->getMessage());
                 }
             }
 

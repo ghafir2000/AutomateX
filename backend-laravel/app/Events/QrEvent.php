@@ -2,7 +2,7 @@
 
 namespace App\Events;
 
-use App\Models\Barcode;
+use App\Models\Qr;
 use Illuminate\Broadcasting\Channel;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Broadcasting\PrivateChannel;
@@ -12,20 +12,20 @@ use Illuminate\Foundation\Events\Dispatchable;
 use Illuminate\Broadcasting\InteractsWithSockets;
 use Illuminate\Contracts\Broadcasting\ShouldBroadcast;
 
-class BarcodeEvent implements ShouldBroadcast
+class QrEvent implements ShouldBroadcast
 {
     use Dispatchable, InteractsWithSockets, SerializesModels;
 
-    protected Barcode $Barcode;
+    protected Qr $Qr;
     protected $userId;
     protected $isUpdate;
 
     /**
      * Create a new event instance.
      */
-    public function __construct(Barcode $Barcode, int $userId, bool $isUpdate = false)
+    public function __construct(Qr $Qr, int $userId, bool $isUpdate = false)
     {
-        $this->Barcode = $Barcode;
+        $this->Qr = $Qr;
         $this->userId = $userId;
         $this->isUpdate = $isUpdate;
     }
@@ -37,11 +37,11 @@ class BarcodeEvent implements ShouldBroadcast
      */
     public function broadcastOn(): array
     {
-        return [new PrivateChannel("user.{$this->userId}.barcodes")];
+        return [new PrivateChannel("user.{$this->userId}.qrs")];
     }
     public function broadcastAs(): string
     {
-        return 'barcode-event'; // Keep this consistent with Flutter
+        return 'Qr-event'; // Keep this consistent with Flutter
     }
 
     /**
@@ -53,7 +53,7 @@ class BarcodeEvent implements ShouldBroadcast
     {
         // Ensure the data structure matches what Flutter expects for parsing
         return [
-            'barcode' => $this->Barcode,
+            'Qr' => $this->Qr,
             'isUpdate' => $this->isUpdate
         ];
     }

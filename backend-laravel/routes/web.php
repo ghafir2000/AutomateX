@@ -2,7 +2,7 @@
 
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\API\BarcodeController;
+use App\Http\Controllers\API\QrController;
 
 /*
 |--------------------------------------------------------------------------
@@ -15,5 +15,5 @@ use App\Http\Controllers\API\BarcodeController;
 |
 */
 
-Route::get('/', [BarcodeController::class, 'index']);
+Route::get('/', [QrController::class, 'index']);
 

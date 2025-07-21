@@ -2,7 +2,7 @@
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\API\BarcodeController;
+use App\Http\Controllers\API\QrController;
 use App\Http\Controllers\API\AuthController;
 
 /*
@@ -18,24 +18,24 @@ use App\Http\Controllers\API\AuthController;
 Route::post('/register', [AuthController::class, 'register']);
 Route::post('/login',[AuthController::class , 'login']);
 
-Route::post('/barcode',[BarcodeController::class , 'store']);
-Route::get('/barcode',[BarcodeController::class , 'index']);
-Route::put('/barcode/{value}',[BarcodeController::class , 'update']); //the barcode value itself 
+Route::post('/Qr',[QrController::class , 'store']);
+Route::get('/Qr',[QrController::class , 'index']);
+Route::put('/Qr/{value}',[QrController::class , 'update']); //the Qr value itself 
 
-// Route::post('/barcode', function (Request $request) {
-//     // Access the barcode data sent as form data
-//     $barcodeData = $request->input('barcode');
+// Route::post('/Qr', function (Request $request) {
+//     // Access the Qr data sent as form data
+//     $QrData = $request->input('Qr');
     
-//     if ($barcodeData) {
+//     if ($QrData) {
 //         // Log it, save to database, etc.
-//         \Illuminate\Support\Facades\Log::info('Barcode received: ' . $barcodeData);
+//         \Illuminate\Support\Facades\Log::info('Qr received: ' . $QrData);
 
 //         return response()->json([
-//             'message' => 'Barcode received successfully!',
-//             'received_barcode' => $barcodeData
+//             'message' => 'Qr received successfully!',
+//             'received_Qr' => $QrData
 //         ], 200);
 //     } else {
-//         return response()->json(['error' => 'No barcode data received'], 400);
+//         return response()->json(['error' => 'No Qr data received'], 400);
 //     }
 // });
 

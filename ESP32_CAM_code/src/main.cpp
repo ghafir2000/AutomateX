@@ -10,6 +10,7 @@
  * - Prevents stack overflows in the loop by using static structs.
  * - Includes comprehensive debugging feedback on both Serial and a web UI.
  * - ADDED: Live grayscale camera feed displayed on the web UI using an HTML5 Canvas.
+ * - ADDED: Publishes successfully scanned QR code data to an MQTT broker.
  */
 
 // =======================================================
@@ -18,8 +19,10 @@
 #include "esp_camera.h"
 #include <WiFi.h>
 #include "esp_http_server.h"
-#include "quirc/quirc.h" // Using the raw quirc library for QR decoding
+#include "quirc/quirc.h"     // Using the raw quirc library for QR decoding
 #include "string.h"
+#include <PubSubClient.h>   // <<< NEW: For MQTT communication
+#include <ArduinoJson.h>    // <<< NEW: For creating the JSON payload
 
 // =======================================================
 //   !!! CONFIGURE YOUR WIFI SETTINGS HERE !!!
@@ -28,12 +31,35 @@ const char* ssid = "AHMAD";
 const char* password = "12345678";
 // =======================================================
 
+
 // =======================================================
-// Global variables for QR code and status handling
+//   !!! CONFIGURE YOUR MQTT SETTINGS HERE !!!
 // =======================================================
-struct quirc *qr_recognizer = NULL;         // The quirc recognizer instance
-char qr_code_data[512] = "Point camera at a QR Code"; // Buffer to store decoded QR data
-char system_status[128] = "Initializing..."; // Buffer to store the current system status for web UI
+const char* mqtt_server = "192.168.1.104"; // <-- IMPORTANT: Enter your MQTT Broker IP or hostname
+const int   mqtt_port = 1883;
+const char* mqtt_topic = "esp-cam/scan/data";     // This matches your Laravel listener
+// If your broker needs authentication, fill these in. Otherwise, leave them blank.
+const char* mqtt_user = ""; 
+const char* mqtt_password = "";
+// =======================================================
+
+
+// =======================================================
+// Global variables
+// =======================================================
+struct quirc *qr_recognizer = NULL;
+char qr_code_data[512] = "Point camera at a QR Code";
+char system_status[128] = "Initializing...";
+
+
+// <<< NEW: Variables for timed publishing
+unsigned long lastPublishTime = 0;
+const unsigned long publishInterval = 1000; // Interval in milliseconds (1000ms = 1 second)
+
+// <<< NEW: Global objects for MQTT
+WiFiClient espClient;
+PubSubClient mqttClient(espClient);
+
 
 // =======================================================
 // --- CAMERA PINS - AI-THINKER MODEL ---
@@ -56,13 +82,14 @@ char system_status[128] = "Initializing..."; // Buffer to store the current syst
 #define PCLK_GPIO_NUM     22
 
 // =======================================================
-// Forward declarations for web server handlers
+// Forward declarations
 // =======================================================
 static esp_err_t index_handler(httpd_req_t *req);
 static esp_err_t qr_data_handler(httpd_req_t *req);
 static esp_err_t status_handler(httpd_req_t *req);
-static esp_err_t camera_feed_handler(httpd_req_t *req); // <-- NEW: Handler for the camera feed
+static esp_err_t camera_feed_handler(httpd_req_t *req);
 void startWebServer();
+void reconnectMqtt(); // <<< NEW
 
 // =======================================================
 // setup() - Main initialization routine
@@ -70,12 +97,10 @@ void startWebServer();
 void setup() {
   Serial.begin(115200);
   Serial.setDebugOutput(true);
-  Serial.println("--- ESP32-CAM QR Code Scanner (Final Version with Live Feed) ---");
+  Serial.println("--- ESP32-CAM QR Code Scanner (Final Version with Live Feed & MQTT) ---");
   snprintf(system_status, sizeof(system_status), "Booting up...");
 
-  // =================================================================
   // STEP 1: Connect to Wi-Fi FIRST.
-  // =================================================================
   Serial.printf("Connecting to Wi-Fi: %s\n", ssid);
   snprintf(system_status, sizeof(system_status), "Connecting to WiFi...");
   WiFi.begin(ssid, password);
@@ -87,9 +112,7 @@ void setup() {
   Serial.print("IP Address: ");
   Serial.println(WiFi.localIP());
 
-  // =================================================================
   // STEP 2: Initialize the Camera.
-  // =================================================================
   camera_config_t config;
   config.ledc_channel = LEDC_CHANNEL_0;
   config.ledc_timer = LEDC_TIMER_0;
@@ -110,9 +133,9 @@ void setup() {
   config.pin_pwdn = PWDN_GPIO_NUM;
   config.pin_reset = RESET_GPIO_NUM;
   config.xclk_freq_hz = 16000000;
-  config.pixel_format = PIXFORMAT_GRAYSCALE; // Using grayscale for QR decoding and streaming
-  config.frame_size = FRAMESIZE_QVGA;       // 320x240 resolution
-  config.jpeg_quality = 12;                 // Not used for raw frames, but must be set
+  config.pixel_format = PIXFORMAT_GRAYSCALE; 
+  config.frame_size = FRAMESIZE_QVGA;       
+  config.jpeg_quality = 12;                 
   config.fb_count = psramFound() ? 2 : 1;
   config.fb_location = psramFound() ? CAMERA_FB_IN_PSRAM : CAMERA_FB_IN_DRAM;
   config.grab_mode = CAMERA_GRAB_WHEN_EMPTY;
@@ -122,14 +145,12 @@ void setup() {
   esp_err_t err = esp_camera_init(&config);
   if (err != ESP_OK) {
     Serial.printf("FATAL: Camera init failed with error 0x%x\n", err);
-    snprintf(system_status, sizeof(system_status), "FATAL: Camera init failed. Check power and connections, then reset.");
+    snprintf(system_status, sizeof(system_status), "FATAL: Camera init failed. Check power/connections, then reset.");
     return;
   }
   Serial.println("Camera initialized successfully.");
 
-  // =================================================================
   // STEP 3: Initialize the QR code recognizer.
-  // =================================================================
   Serial.println("Initializing QR code recognizer...");
   qr_recognizer = quirc_new();
   if (!qr_recognizer) {
@@ -139,51 +160,79 @@ void setup() {
   }
   Serial.println("QR recognizer initialized.");
 
-  // =================================================================
-  // STEP 4: Start the Web Server.
-  // =================================================================
+  // <<< NEW: STEP 4: Configure MQTT Client
+  Serial.println("Configuring MQTT client...");
+  mqttClient.setServer(mqtt_server, mqtt_port);
+  
+  // STEP 5: Start the Web Server.
   startWebServer();
   Serial.print("Web Server Ready! Go to: http://");
   Serial.println(WiFi.localIP());
   snprintf(system_status, sizeof(system_status), "Scanning for QR codes...");
 }
 
+
+// <<< NEW: Function to handle MQTT reconnection
+void reconnectMqtt() {
+  while (!mqttClient.connected()) {
+    Serial.print("Attempting MQTT connection...");
+    snprintf(system_status, sizeof(system_status), "Connecting to MQTT Broker...");
+    
+    // Create a random client ID to avoid collisions
+    String clientId = "ESP32-CAM-Client-";
+    clientId += String(random(0xffff), HEX);
+    
+    if (mqttClient.connect(clientId.c_str(), mqtt_user, mqtt_password)) {
+      Serial.println("connected");
+      snprintf(system_status, sizeof(system_status), "Scanning for QR codes...");
+    } else {
+      Serial.print("failed, rc=");
+      Serial.print(mqttClient.state());
+      Serial.println(" try again in 5 seconds");
+      snprintf(system_status, sizeof(system_status), "MQTT Connection Failed. Retrying...");
+      delay(5000); // Wait 5 seconds before retrying
+    }
+  }
+}
+
+
 // =======================================================
-// loop() - Continuously captures and decodes frames for QR
+// loop() - Main operational loop (Timed to publish every 1 second)
 // =======================================================
 void loop() {
+  // Ensure MQTT client is connected and maintain connection
+  if (WiFi.status() == WL_CONNECTED) {
+    if (!mqttClient.connected()) {
+      reconnectMqtt();
+    }
+    mqttClient.loop();
+  }
+
   camera_fb_t *fb = NULL;
-  
-  // Attempt to capture a frame from the camera for QR processing
   fb = esp_camera_fb_get();
   if (!fb) {
     Serial.println("ERROR: Camera frame buffer capture failed (for QR).");
     snprintf(system_status, sizeof(system_status), "Error: Failed to get frame for QR scan.");
-    delay(1000); 
+    delay(1000);
     return;
   }
 
-  // Resize the QR recognizer buffer if needed
   if (quirc_resize(qr_recognizer, fb->width, fb->height) < 0) {
       Serial.println("ERROR: Failed to resize quirc buffer. Out of memory?");
       snprintf(system_status, sizeof(system_status), "Error: QR recognizer failed to resize.");
-      esp_camera_fb_return(fb); 
+      esp_camera_fb_return(fb);
       delay(1000);
       return;
   }
 
-  // Copy frame data to the QR recognizer and decode
   uint8_t *image = quirc_begin(qr_recognizer, NULL, NULL);
   memcpy(image, fb->buf, fb->len);
   quirc_end(qr_recognizer);
 
-  // Return the frame buffer immediately after use
   esp_camera_fb_return(fb);
 
   int count = quirc_count(qr_recognizer);
   if (count > 0) {
-    Serial.printf("SUCCESS: %d QR code(s) detected.\n", count);
-    
     static struct quirc_code code;
     static struct quirc_data data;
 
@@ -194,43 +243,68 @@ void loop() {
       Serial.printf("QR DECODE FAILED: %s\n", quirc_strerror(err));
       snprintf(system_status, sizeof(system_status), "Error decoding QR: %s", quirc_strerror(err));
     } else {
-      Serial.printf("QR DECODE SUCCESS: '%.*s'\n", data.payload_len, data.payload);
+      // A QR code was successfully decoded.
+      // Update the global qr_code_data buffer immediately for the web UI.
       snprintf(qr_code_data, sizeof(qr_code_data), "%.*s", data.payload_len, data.payload);
       snprintf(system_status, sizeof(system_status), "Last scan successful!");
+
+      // <<< --- NEW TIMED PUBLISHING LOGIC --- >>>
+      // Check if the publish interval (1 second) has passed.
+      if (millis() - lastPublishTime >= publishInterval) {
+        
+        Serial.printf("DECODED DATA: '%s'. Time to publish.\n", qr_code_data);
+        
+        if (mqttClient.connected()) {
+            StaticJsonDocument<256> doc;
+            doc["qrData"] = qr_code_data;
+            char jsonBuffer[512];
+            size_t n = serializeJson(doc, jsonBuffer);
+            
+            Serial.printf("Publishing data to MQTT topic %s: %s\n", mqtt_topic, jsonBuffer);
+            if (mqttClient.publish(mqtt_topic, jsonBuffer, n)) {
+                Serial.println("MQTT Publish Success");
+                // IMPORTANT: Update the timestamp to reset the timer
+                lastPublishTime = millis();
+            } else {
+                Serial.println("MQTT Publish Failed");
+            }
+        } else {
+            Serial.println("MQTT client not connected. Cannot publish.");
+        }
+      }
+      // <<< --- END OF TIMED LOGIC --- >>>
     }
   }
-  
-  // Small delay to allow web server and other tasks to run
-  delay(100); 
+
+  // The main loop delay is kept small to keep the video feed smooth
+  delay(50);
 }
-  
+
 // =======================================================
-// Web Server Setup and Handlers
+// Web Server Setup and Handlers (No changes below this line)
 // =======================================================
 void startWebServer(){
   httpd_handle_t server = NULL;
   httpd_config_t config = HTTPD_DEFAULT_CONFIG();
-  config.max_uri_handlers = 8; // Increased for new handler
+  config.max_uri_handlers = 8;
 
-  // URI handlers
   httpd_uri_t index_uri = { .uri = "/", .method = HTTP_GET, .handler = index_handler, .user_ctx = NULL };
   httpd_uri_t qr_data_uri = { .uri = "/qr-data", .method = HTTP_GET, .handler = qr_data_handler, .user_ctx = NULL };
   httpd_uri_t status_uri = { .uri = "/status", .method = HTTP_GET, .handler = status_handler, .user_ctx = NULL };
-  httpd_uri_t camera_feed_uri = { .uri = "/camera-feed", .method = HTTP_GET, .handler = camera_feed_handler, .user_ctx = NULL }; // <-- NEW
+  httpd_uri_t camera_feed_uri = { .uri = "/camera-feed", .method = HTTP_GET, .handler = camera_feed_handler, .user_ctx = NULL };
 
   Serial.println("Starting web server...");
   if (httpd_start(&server, &config) == ESP_OK) {
     httpd_register_uri_handler(server, &index_uri);
     httpd_register_uri_handler(server, &qr_data_uri);
     httpd_register_uri_handler(server, &status_uri);
-    httpd_register_uri_handler(server, &camera_feed_uri); // <-- NEW
+    httpd_register_uri_handler(server, &camera_feed_uri);
     Serial.println("Web server started.");
   } else {
     Serial.println("Error starting web server!");
   }
 }
 
-// Handler to send the raw camera frame buffer
 static esp_err_t camera_feed_handler(httpd_req_t *req){
   camera_fb_t *fb = NULL;
   esp_err_t res = ESP_OK;
@@ -248,11 +322,10 @@ static esp_err_t camera_feed_handler(httpd_req_t *req){
   
   res = httpd_resp_send(req, (const char *)fb->buf, fb->len);
   
-  esp_camera_fb_return(fb); // IMPORTANT: return the frame buffer
+  esp_camera_fb_return(fb);
   
   return res;
 }
-
 
 static esp_err_t qr_data_handler(httpd_req_t *req){
   httpd_resp_set_type(req, "text/plain");
@@ -266,7 +339,6 @@ static esp_err_t status_handler(httpd_req_t *req){
   return httpd_resp_send(req, system_status, strlen(system_status));
 }
 
-// Main HTML page handler - MODIFIED with Canvas and new JavaScript
 static esp_err_t index_handler(httpd_req_t *req){
   httpd_resp_set_type(req, "text/html");
   const char* html = R"rawliteral(
@@ -289,10 +361,7 @@ static esp_err_t index_handler(httpd_req_t *req){
 <body>
     <div class="container">
         <h1>ESP32-CAM QR Code Scanner</h1>
-        
-        <!-- NEW: Canvas for displaying the camera feed -->
         <canvas id="camera-feed-canvas" width="320" height="240"></canvas>
-
         <div class="result-box">
             <h2>Decoded QR Code Data</h2>
             <p id="qr-data">Initializing...</p>
@@ -302,61 +371,44 @@ static esp_err_t index_handler(httpd_req_t *req){
         </div>
     </div>
     <script>
-        // Get canvas element and its 2D context
         const canvas = document.getElementById('camera-feed-canvas');
         const ctx = canvas.getContext('2d');
         const width = canvas.width;
         const height = canvas.height;
         let imageData = ctx.createImageData(width, height);
-
-        // Function to update QR data and system status
         function updateData() {
             fetch('/qr-data').then(response => response.text()).then(data => {
                 document.getElementById('qr-data').innerText = data;
             }).catch(error => console.error('Error fetching QR data:', error));
-            
             fetch('/status').then(response => response.text()).then(data => {
                 document.getElementById('system-status').innerText = data;
             }).catch(error => console.error('Error fetching status:', error));
         }
-
-        // NEW: Function to fetch and render the camera feed
         async function updateCameraFeed() {
             try {
                 const response = await fetch('/camera-feed');
                 if (!response.ok) {
                     console.error('Failed to fetch camera feed.');
-                    // Request the next frame even if this one fails
                     requestAnimationFrame(updateCameraFeed);
                     return;
                 }
-
                 const buffer = await response.arrayBuffer();
                 const grayscale = new Uint8Array(buffer);
-                
-                // Render the grayscale image to the canvas
-                // The data buffer is an RGBA buffer, so we need to set all three
-                // color channels (R, G, B) to the grayscale value.
                 let data_pos = 0;
                 for (let i = 0; i < grayscale.length; i++) {
-                    imageData.data[data_pos++] = grayscale[i]; // Red
-                    imageData.data[data_pos++] = grayscale[i]; // Green
-                    imageData.data[data_pos++] = grayscale[i]; // Blue
-                    imageData.data[data_pos++] = 255;          // Alpha
+                    imageData.data[data_pos++] = grayscale[i];
+                    imageData.data[data_pos++] = grayscale[i];
+                    imageData.data[data_pos++] = grayscale[i];
+                    imageData.data[data_pos++] = 255;
                 }
-                
                 ctx.putImageData(imageData, 0, 0);
-
             } catch (error) {
                 console.error('Error fetching camera feed:', error);
             }
-            // Request the next frame
             requestAnimationFrame(updateCameraFeed);
         }
-
-        // Start fetching data and the camera feed
-        setInterval(updateData, 1500); // Update text data every 1.5 seconds
-        updateCameraFeed(); // Start the camera feed loop
+        setInterval(updateData, 1500);
+        updateCameraFeed();
     </script>
 </body>
 </html>

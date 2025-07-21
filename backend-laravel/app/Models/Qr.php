@@ -7,11 +7,11 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 
-class Barcode extends Model
+class Qr extends Model
 {
     use HasFactory;
 
-    protected $table = 'barcodes';
+    protected $table = 'Qrs';
 
     protected $guarded = ['id', 'created_at', 'updated_at'];
 
