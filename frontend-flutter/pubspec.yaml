@@ -1,5 +1,5 @@
-name: app
-description: A new Flutter project.
+name: dd
+description: "A new Flutter project."
 # The following line prevents the package from being accidentally published to
 # pub.dev using `flutter pub publish`. This is preferred for private packages.
 publish_to: 'none' # Remove this line if you wish to publish to pub.dev
@@ -19,7 +19,7 @@ publish_to: 'none' # Remove this line if you wish to publish to pub.dev
 version: 1.0.0+1
 
 environment:
-  sdk: '>=3.1.0 <4.0.0'
+  sdk: ^3.8.1
 
 # Dependencies specify other packages that your package needs in order to work.
 # To automatically upgrade your package dependencies to the latest versions
@@ -30,16 +30,16 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
-  get: ^4.6.6
-  shared_preferences: ^2.2.2
-  http: ^1.2.1 # <--- ADD THIS LINE
+  get: ^4.7.2
+  shared_preferences: ^2.5.3
+  http: ^1.4.0
+  # pusher_client_fixed: ^0.0.5
+  molten_navigationbar_flutter: ^1.0.1
+  intl: ^0.20.2
 
   # The following adds the Cupertino Icons font to your application.
   # Use with the CupertinoIcons class for iOS style icons.
-  cupertino_icons: ^1.0.2
-  molten_navigationbar_flutter: ^1.0.1
-  pusher_client_fixed:
-  intl:
+  cupertino_icons: ^1.0.8
 
 dev_dependencies:
   flutter_test:
@@ -50,8 +50,7 @@ dev_dependencies:
   # activated in the `analysis_options.yaml` file located at the root of your
   # package. See that file for information about deactivating specific lint
   # rules and activating additional ones.
-  flutter_lints: ^2.0.0
-
+  flutter_lints: ^5.0.0
 
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec
@@ -59,53 +58,29 @@ dev_dependencies:
 # The following section is specific to Flutter packages.
 flutter:
 
+  # The following line ensures that the Material Icons font is
+  # included with your application, so that you can use the icons in
+  # the material Icons class.
   uses-material-design: true
 
+  # To add assets to your application, add an assets section, like this:
   assets:
     - images/
+  #   - images/a_dot_ham.jpeg
 
-  fonts:
-    - family: Tajawal
-      fonts:
-        - asset: Font/Tajawal/Tajawal-Black.ttf
-        - asset: Font/Tajawal/Tajawal-Bold.ttf
-        - asset: Font/Tajawal/Tajawal-ExtraBold.ttf
-        - asset: Font/Tajawal/Tajawal-ExtraLight.ttf
-        - asset: Font/Tajawal/Tajawal-Light.ttf
-        - asset: Font/Tajawal/Tajawal-Medium.ttf
-    - family: dancingscript
-      fonts:
-        - asset: Font/dancingscript/DancingScript-VariableFont_wght.ttf
+  # An image asset can refer to one or more resolution-specific "variants", see
+  # https://flutter.dev/to/resolution-aware-images
 
-    - family: Raleway
-      fonts:
-        - asset: Font/raleway/Raleway-Regular.ttf
-    - family: Trajan
-      fonts:
-        - asset: Font/trajan-pro/TrajanPro-Bold.otf
-        - asset: Font/trajan-pro/TrajanPro-Regular.ttf
-    - family: Roboto
-      fonts:
-        - asset: Font/roboto/Roboto-Black.ttf
-        - asset: Font/roboto/Roboto-BlackItalic.ttf
-        - asset: Font/roboto/Roboto-Bold.ttf
-        - asset: Font/roboto/Roboto-BoldItalic.ttf
-        - asset: Font/roboto/Roboto-Italic.ttf
-        - asset: Font/roboto/Roboto-Light.ttf
-        - asset: Font/roboto/Roboto-Medium.ttf
-        - asset: Font/roboto/Roboto-MediumItalic.ttf
-        - asset: Font/roboto/Roboto-Regular.ttf
-        - asset: Font/roboto/Roboto-Thin.ttf
-        - asset: Font/roboto/Roboto-ThinItalic.ttf
+  # For details regarding adding assets from package dependencies, see
+  # https://flutter.dev/to/asset-from-package
 
-    - family: Ptsans
-      fonts:
-        - asset: Font/Ptsans/PTS55F.ttf
-        - asset: Font/Ptsans/PTS56F.ttf
-        - asset: Font/Ptsans/PTS75F.ttf
-        - asset: Font/Ptsans/PTS76F.ttf
-
-         #   - family: Schyler
+  # To add custom fonts to your application, add a fonts section here,
+  # in this "flutter" section. Each entry in this list should have a
+  # "family" key with the font family name, and a "fonts" key with a
+  # list giving the asset and other descriptors for the font. For
+  # example:
+  # fonts:
+  #   - family: Schyler
   #     fonts:
   #       - asset: fonts/Schyler-Regular.ttf
   #       - asset: fonts/Schyler-Italic.ttf
@@ -117,4 +92,4 @@ flutter:
   #         weight: 700
   #
   # For details regarding fonts from package dependencies,
-  # see https://flutter.dev/custom-fonts/#from-packages
+  # see https://flutter.dev/to/font-from-package
