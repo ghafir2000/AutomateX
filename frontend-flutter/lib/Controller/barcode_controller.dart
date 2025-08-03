@@ -11,7 +11,8 @@ class BarcodeController extends GetxController {
   var errorMessage = ''.obs; // To store any error messages
 
   // API Configuration (Adjust as needed)
-  final String _baseUrl = 'http://10.0.2.2:8000/api'; // Your Laravel API base URL
+  final String _baseUrl =
+      'http://10.0.2.2:8000/api'; // Your Laravel API base URL
 
   @override
   void onInit() {
@@ -34,30 +35,40 @@ class BarcodeController extends GetxController {
       //   isLoading(false);
       //   // Optionally, navigate to login: Get.offAll(() => LoginPage());
       //   return;
-      // }
+      // }`
       // --- End Optional Auth Token ---
 
-      final response = await http.get(
-        Uri.parse('$_baseUrl/barcodes'), // Assuming your endpoint is /api/barcodes
-        headers: {
-          'Accept': 'application/json',
-          // 'Authorization': 'Bearer $token', // Uncomment if endpoint is protected
-        },
-      ).timeout(const Duration(seconds: 15));
+      final response = await http
+          .get(
+            Uri.parse('$_baseUrl/Qr'), // Assuming your endpoint is /api/Qr
+            headers: {
+              'Accept': 'application/json',
+              // 'Authorization': 'Bearer $token', // Uncomment if endpoint is protected
+            },
+          )
+          .timeout(const Duration(seconds: 15));
 
       if (response.statusCode == 200) {
-        final List<dynamic> jsonData = json.decode(response.body);
-        // Assuming the API returns a list of barcode objects directly
-        // If it's nested under a key like 'data', adjust accordingly:
-        // final List<dynamic> jsonData = json.decode(response.body)['data'];
+        // Correctly parse the JSON response.
+        final dynamic decodedData = json.decode(response.body);
 
-        barcodeList.assignAll(
-            jsonData.map((data) => Barcode.fromJson(data)).toList()
-        );
+        // Check if the response is a Map and contains the 'data' key.
+        if (decodedData is Map<String, dynamic> &&
+            decodedData.containsKey('data')) {
+          final List<dynamic> jsonData = decodedData['data']['data'];
+
+          // Assign the data to the observable list.
+          barcodeList.assignAll(
+            jsonData.map((data) => Barcode.fromJson(data)).toList(),
+          );
+        }
       } else {
         // Handle API errors (e.g., 401, 404, 500)
         final errorData = json.decode(response.body);
-        errorMessage(errorData['message'] ?? 'Failed to load barcodes. Status code: ${response.statusCode}');
+        errorMessage(
+          errorData['message'] ??
+              'Failed to load  qrs. Status code: ${response.statusCode}',
+        );
         print("API Error: ${response.statusCode} - ${response.body}");
       }
     } catch (e) {
@@ -74,9 +85,9 @@ class BarcodeController extends GetxController {
     await fetchBarcodes();
   }
 
-// Optional: Method to add a new barcode (if ESP doesn't send directly)
-// Future<void> addBarcode(Map<String, dynamic> barcodeData) async { ... }
+  // Optional: Method to add a new barcode (if ESP doesn't send directly)
+  // Future<void> addBarcode(Map<String, dynamic> barcodeData) async { ... }
 
-// Optional: Method to delete a barcode
-// Future<void> deleteBarcode(int barcodeId) async { ... }
+  // Optional: Method to delete a barcode
+  // Future<void> deleteBarcode(int barcodeId) async { ... }
 }

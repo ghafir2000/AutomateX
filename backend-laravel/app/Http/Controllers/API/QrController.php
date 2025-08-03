@@ -25,12 +25,14 @@ class QrController extends Controller
         if (!Auth::attempt(['email' => 'ahmadghafeer@gmail.com', 'password' => 'password'])) { // Provide PLAIN TEXT password
             return $this->response(message: 'The provided credentials are incorrect.', code: 401);
         }
-
+        
         $Qrs = Qr::paginate(10);
         
 
         if (request()->expectsJson()) {
-            return $this->response(data: $Qrs);
+            logger()->info("JSON data : {$this->response($Qrs)}");
+            return $this->response($Qrs);
+
         }
 
         return view('index', compact('Qrs'));
